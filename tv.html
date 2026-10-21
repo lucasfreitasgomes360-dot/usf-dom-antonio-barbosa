@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TV - USF Dom Antonio Barbosa</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+        import { getDatabase, ref, onChildAdded, onValue, remove } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwWmY1vO6AJaVupUGeOsPs82ChYiDtrxo",
+            authDomain: "usf-dom-antonio-barbosa.firebaseapp.com",
+            databaseURL: "https://usf-dom-antonio-barbosa-default-rtdb.firebaseio.com",
+            projectId: "usf-dom-antonio-barbosa",
+            storageBucket: "usf-dom-antonio-barbosa.firebasestorage.app",
+            messagingSenderId: "453061560453",
+            appId: "1:453061560453:web:db2ae1928a0a74e33941ec",
+            measurementId: "G-RQCJ7ECDR3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.database = database;
+        window.dbRef = ref;
+        window.dbOnChildAdded = onChildAdded;
+        window.dbOnValue = onValue;
+        window.dbRemove = remove;
+    </script>
+    <style>
+        body { background: #002b5c; color: white; font-family: sans-serif; text-align: center; height: 100vh; margin: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .topo { background: #001a38; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid #ffcc00; }
+        .unidade-nome { text-align: left; }
+        .unidade-nome h1 { font-size: 1.8rem; margin: 0; color: white; letter-spacing: 1px; font-weight: 900; }
+        .unidade-nome p { font-size: 1.1rem; margin: 2px 0 0 0; color: #ffcc00; font-weight: bold; }
+        .area-relogio { text-align: right; line-height: 1.1; }
+        .relogio { font-size: 3.5rem; color: #ffcc00; font-weight: bold; font-family: 'Courier New', monospace; }
+        .data-extenso { font-size: 1.1rem; color: #ccc; text-transform: capitalize; margin-top: 5px; }
+        .conteudo-principal { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; position: relative; }
+        #area-chamada { display: none; }
+        .paciente { font-size: 8rem; font-weight: bold; color: #ffcc00; text-transform: uppercase; padding: 0 20px; text-shadow: 4px 4px 10px rgba(0,0,0,0.5); }
+        .sala { font-size: 5rem; background: white; color: #002b5c; padding: 10px 60px; border-radius: 20px; display: inline-block; margin-top: 25px; font-weight: bold; border: 4px solid #ffcc00; }
+        #painel-informativo { display: block; padding: 20px; }
+        .card-info { background: white; color: #333; border-radius: 25px; padding: 45px; max-width: 85%; margin: 0 auto; border-left: 25px solid #007bff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #texto-info { font-size: 4rem; margin: 25px 0; font-weight: bold; line-height: 1.2; }
+        .barra-progresso { height: 10px; background: #eee; border-radius: 5px; margin-top: 20px; overflow: hidden; }
+        #progresso-fill { height: 100%; width: 0%; background: #007bff; }
+        @keyframes flash { 0% { background-color: #002b5c; } 50% { background-color: #ffcc00; } 100% { background-color: #002b5c; } }
+        .piscar-alerta { animation: flash 0.8s ease-in-out 5; }
+        .historico-tv { background: rgba(0,0,0,0.3); padding: 15px; display: flex; justify-content: center; gap: 40px; border-top: 2px solid rgba(255,255,255,0.1); }
+        .hist-item-tv { border-left: 4px solid #ffcc00; padding-left: 15px; text-align: left; }
+        .assinatura-tv { position: absolute; bottom: 8px; right: 15px; font-size: 0.65rem; color: rgba(255,255,255,0.2); text-align: right; line-height: 1.2; }
+    </style>
+</head>
+<body id="corpo-tv">
+    <div class="assinatura-tv">
+        Desenvolvido por <b>Lucas Freitas Gomes</b> &copy; 2026<br>
+        USF Dom Antonio Barbosa
+    </div>
+
+    <div id="aviso-inicial" onclick="this.style.display='none'" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:999; display:flex; flex-direction:column; justify-content:center; align-items:center; cursor:pointer;">
+        <h1 style="color:#ffcc00; font-size: 3rem;">TELA DA TV</h1>
+        <p style="color:white; font-size: 1.5rem;">CLIQUE PARA ATIVAR O SOM</p>
+    </div>
+
+    <div class="topo">
+        <div class="unidade-nome">
+            <h1>USF DOM ANTONIO BARBOSA</h1>
+            <p>Unidade de Saúde da Família</p>
+        </div>
+        <div class="area-relogio">
+            <div id="relogio" class="relogio">00:00:00</div>
+            <div id="data-extenso" class="data-extenso">--/--/----</div>
+        </div>
+    </div>
+
+    <div class="conteudo-principal">
+        <div id="area-chamada">
+            <div id="txtPaciente" class="paciente">--</div>
+            <div id="txtSala" class="sala">AGUARDE</div>
+        </div>
+        <div id="painel-informativo">
+            <div class="card-info" id="card-cor">
+                <h2 style="color:#999; margin:0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px;">INFORMATIVO</h2>
+                <div id="texto-info">Bem-vindo à Unidade</div>
+                <div class="barra-progresso"><div id="progresso-fill"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="painel-historico" class="historico-tv"></div>
+
+    <script>
+        const somCampainha = new Audio('https://assets.mixkit.co/active_storage/sfx/2861/2861-preview.mp3');
+        
+        let filaDeEspera = [], processandoChamada = false, listaAvisos = [], indiceAviso = 0, intervaloCarrossel, histTv = [];
+
+        window.addEventListener('load', () => {
+            window.dbOnChildAdded(window.dbRef(window.database, 'fila_chamadas'), (snap) => {
+                filaDeEspera.push(snap.val()); 
+                window.dbRemove(window.dbRef(window.database, 'fila_chamadas/' + snap.key));
+                if (!processandoChamada) iniciarFila();
+            });
+
+            window.dbOnValue(window.dbRef(window.database, 'avisos_unidade'), snap => {
+                listaAvisos = []; 
+                snap.forEach(child => { listaAvisos.push(child.val()); });
+                if (!processandoChamada) iniciarCarrossel();
+            });
+        });
+
+        function abreviarNome(nomeCompleto) {
+            let partes = nomeCompleto.trim().split(/\s+/);
+            if (partes.length <= 1) return nomeCompleto;
+            if (partes[0].toUpperCase().includes("SENHA")) return nomeCompleto;
+
+            let primeiroNome = partes[0];
+            let sobrenomesAbreviados = partes.slice(1).map(sobrenome => {
+                if (/^(de|da|do|dos|das|e)$/i.test(sobrenome)) {
+                    return sobrenome.toLowerCase();
+                }
+                return sobrenome.charAt(0).toUpperCase() + ".";
+            }).join(" ");
+
+            return `${primeiroNome} ${sobrenomesAbreviados}`;
+        }
+
+        async function iniciarFila() {
+            if (filaDeEspera.length === 0) { 
+                processandoChamada = false; 
+                document.getElementById('area-chamada').style.display = 'none'; 
+                document.getElementById('painel-informativo').style.display = 'block'; 
+                iniciarCarrossel(); 
+                return; 
+            }
+            processandoChamada = true; 
+            clearInterval(intervaloCarrossel);
+            
+            const atual = filaDeEspera.shift();
+            let msgOriginal = atual.msg.replace("COLABORADOR: ", "");
+            let msgAbreviada = abreviarNome(msgOriginal);
+
+            document.getElementById('area-chamada').style.display = 'block';
+            document.getElementById('painel-informativo').style.display = 'none';
+            document.getElementById('txtPaciente').innerText = msgAbreviada;
+            document.getElementById('txtSala').innerText = atual.local;
+            
+            document.body.classList.remove('piscar-alerta'); 
+            void document.body.offsetWidth; 
+            document.body.classList.add('piscar-alerta');
+            
+            somCampainha.play().catch(e => {});
+            
+            atualizarHistTV(msgAbreviada, atual.local);
+            
+            await falarTexto(atual.msg, atual.local);
+            setTimeout(iniciarFila, 4000);
+        }
+
+        function falarTexto(nome, local) {
+            return new Promise((resolve) => {
+                window.speechSynthesis.cancel();
+                
+                let loc = local.toLowerCase();
+                let prep = "ao"; 
+                if (loc.includes("recepção") || loc.includes("triagem") || loc.includes("vacina") || loc.includes("coleta") || loc.includes("sala") || loc.includes("mesa") || loc.includes("gerência")) {
+                    prep = "à"; 
+                }
+                let nomeUpper = nome.toUpperCase();
+                let textoParaFalar = nome.replace(/PREF\./gi, "PREFERENCIAL");
+
+                let textoFinal = "";
+
+                if (nomeUpper.includes("SENHA")) {
+                    textoFinal = `Atenção. ${textoParaFalar}. Dirija-se ${prep} ${local}`;
+                } else if (nomeUpper.includes("COLABORADOR:")) {
+                    let nomeLimpo = textoParaFalar.replace(/COLABORADOR: /gi, "");
+                    textoFinal = `Atenção. Colaborador ${nomeLimpo}. Dirija-se ${prep} ${local}`;
+                } else {
+                    textoFinal = `Atenção. Paciente ${textoParaFalar}. Dirija-se ${prep} ${local}`;
+                }
+
+                const fala = new SpeechSynthesisUtterance(textoFinal);
+                fala.lang = 'pt-BR';
+                fala.rate = 0.9;
+                fala.onend = () => resolve();
+                fala.onerror = () => resolve();
+                
+                window.speechSynthesis.speak(fala);
+                setTimeout(resolve, 8000);
+            });
+        }
+
+        function iniciarCarrossel() {
+            clearInterval(intervaloCarrossel);
+            if (listaAvisos.length === 0) { 
+                document.getElementById('texto-info').innerText = "USF Dom Antonio Barbosa"; 
+                return; 
+            }
+            rodarFrase(); 
+            intervaloCarrossel = setInterval(rodarFrase, 12000);
+        }
+
+        function rodarFrase() {
+            if (processandoChamada) return;
+            const aviso = listaAvisos[indiceAviso];
+            const card = document.getElementById('card-cor');
+            const txt = document.getElementById('texto-info');
+            const fill = document.getElementById('progresso-fill');
+            fill.style.transition = 'none'; 
+            fill.style.width = '0%';
+            fill.style.backgroundColor = aviso.cor;
+            card.style.borderLeftColor = aviso.cor;
+            txt.innerText = aviso.msg;
+            setTimeout(() => { fill.style.transition = 'width 11.5s linear'; fill.style.width = '100%'; }, 100);
+            indiceAviso = (indiceAviso + 1) % listaAvisos.length;
+        }
+
+        function atualizarHistTV(msg, local) {
+            histTv.unshift({msg, local}); 
+            if(histTv.length > 4) histTv.pop();
+            const p = document.getElementById('painel-historico'); 
+            p.innerHTML = "";
+            histTv.forEach(h => { 
+                p.innerHTML += `<div class="hist-item-tv"><b>${h.msg}</b><br><small>${h.local}</small></div>`; 
+            });
+        }
+
+        setInterval(() => { 
+            const agora = new Date();
+            document.getElementById('relogio').innerText = agora.toLocaleTimeString('pt-BR');
+            document.getElementById('data-extenso').innerText = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        }, 1000);
+    </script>
+</body>
+</html>

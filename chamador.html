@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Chamador - USF Dom Antonio Barbosa</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set, push, transaction, update, remove } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwWmY1vO6AJaVupUGeOsPs82ChYiDtrxo",
+            authDomain: "usf-dom-antonio-barbosa.firebaseapp.com",
+            databaseURL: "https://usf-dom-antonio-barbosa-default-rtdb.firebaseio.com",
+            projectId: "usf-dom-antonio-barbosa",
+            storageBucket: "usf-dom-antonio-barbosa.firebasestorage.app",
+            messagingSenderId: "453061560453",
+            appId: "1:453061560453:web:db2ae1928a0a74e33941ec",
+            measurementId: "G-RQCJ7ECDR3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.database = database;
+        window.dbRef = ref;
+        window.dbOnValue = onValue;
+        window.dbSet = set;
+        window.dbPush = push;
+        window.dbTransaction = transaction;
+        window.dbUpdate = update;
+        window.dbRemove = remove;
+    </script>
+    <style>
+        :root { --primary: #003366; --secondary: #007bff; --success: #28a745; --warning: #ff8c00; --info: #17a2b8; --light: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; min-height: 100vh; }
+        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; border-top: 10px solid var(--primary); }
+        .header-unidade { text-align: center; margin-bottom: 25px; }
+        .header-unidade h2 { color: var(--primary); margin: 0; font-size: 1.6rem; text-transform: uppercase; font-weight: 800; }
+        .header-unidade p { color: #d32f2f; margin: 2px 0 0 0; font-weight: bold; font-size: 1rem; }
+        .card-setor { background: var(--light); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #dee2e6; }
+        label { font-weight: bold; display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--primary); text-transform: uppercase; }
+        select, input { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid #ddd; box-sizing: border-box; font-size: 1rem; margin-bottom: 10px; }
+        .btn { border: none; border-radius: 10px; padding: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; color: white; text-transform: uppercase; width: 100%; margin-bottom: 10px; transition: filter 0.2s; }
+        .btn:hover { filter: brightness(1.1); }
+        .btn-blue { background: var(--secondary); }
+        .btn-orange { background: var(--warning); }
+        .btn-green { background: var(--success); }
+        .btn-info { background: var(--info); }
+        .btn-purple { background: #6f42c1; }
+        .flex-row { display: flex; gap: 10px; }
+        .flex-row .btn { width: 50%; }
+        .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fff3cd; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ffeeba; text-align: center; }
+        .status-item { font-size: 0.85rem; color: #856404; }
+        .status-item b { font-size: 1.1rem; color: #000; }
+        .hist-container { margin-top: 25px; border-top: 2px dashed #ddd; padding-top: 20px; }
+        .hist-item { background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-rechamada { background: #f1f3f5; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; color: var(--secondary); cursor: pointer; }
+        #toast { visibility: hidden; min-width: 250px; background: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 10; top: 30px; left: 50%; transform: translateX(-50%); opacity: 0; transition: 0.5s; }
+        #toast.show { visibility: visible; opacity: 1; top: 50px; }
+        .footer-creditos { margin-top: 30px; text-align: center; font-size: 0.75rem; color: #777; line-height: 1.4; border-top: 1px solid #ddd; padding-top: 15px; width: 100%; max-width: 450px; }
+    </style>
+</head>
+<body>
+    <div id="toast">Operação realizada!</div>
+    <div class="container">
+        <div class="header-unidade">
+            <h2>USF DOM ANTONIO BARBOSA</h2>
+            <p>Unidade de Saúde da Família</p>
+        </div>
+        
+        <div class="card-setor">
+            <label>Selecione seu Setor</label>
+            <select id="categoria" onchange="trocouCategoria()">
+                <option value="">-- Escolha o Setor --</option>
+                <option value="acolhimento">🎫 ACOLHIMENTO</option>
+                <option value="recepcao">🏢 RECEPÇÃO</option>
+                <option value="medico">🩺 MÉDICO</option>
+                <option value="enfermagem">💉 ENFERMAGEM</option>
+                <option value="odonto">🦷 ODONTOLOGIA</option>
+                <option value="auditorio">📢 AUDITÓRIO</option>
+                <option value="servico_social">🤝 SERVIÇO SOCIAL</option>
+                <option value="gerencia">⚙️ GERÊNCIA</option>
+            </select>
+        </div>
+
+        <div id="areaChamada" style="display:none">
+            <div id="painelStatus" class="status-grid" style="display:none">
+                <div class="status-item">Normal: <b id="stNormal">0</b></div>
+                <div class="status-item">Pref: <b id="stPref">0</b></div>
+                <div class="status-item">Coleta: <b id="stColeta">0</b></div>
+                <div class="status-item">Odonto: <b id="stOdonto">0</b></div>
+            </div>
+
+            <div id="interfaceAcolhimento" style="display:none">
+                <label>Sincronizar Senhas Entregues</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <input type="number" id="inputNormal" placeholder="Normal">
+                    <input type="number" id="inputPref" placeholder="Pref">
+                    <input type="number" id="inputColeta" placeholder="Coleta">
+                    <input type="number" id="inputOdonto" placeholder="Odonto">
+                </div>
+                <button class="btn btn-green" onclick="atualizarEntregues()">✅ Sincronizar Tudo</button>
+            </div>
+
+            <div id="selecaoSala">
+                <label>Sua Sala/Local</label>
+                <select id="minhaSala" onchange="configurarTela()"></select>
+            </div>
+
+            <div id="interfaceRecepcao" style="display:none; margin-top: 15px;">
+                <div class="flex-row">
+                    <button class="btn btn-blue" onclick="gerarSenha('NORMAL', 'SENHA')">🟦 NORMAL</button>
+                    <button class="btn btn-orange" onclick="gerarSenha('PREFERENCIAL', 'SENHA PREF.')">🟧 PREF.</button>
+                </div>
+                <button class="btn btn-info" onclick="gerarSenha('ODONTO', 'SENHA ODONTO')">🦷 ODONTOLOGIA</button>
+            </div>
+
+            <div id="interfaceColeta" style="display:none; margin-top:15px;">
+                <button class="btn btn-purple" onclick="gerarSenha('COLETA', 'SENHA COLETA')">🧪 CHAMAR COLETA</button>
+            </div>
+
+            <div id="interfaceNome" style="display:none; margin-top: 15px;">
+                <label id="labelNome">Nome do Paciente</label>
+                <input type="text" id="nomePaciente" placeholder="Digite o nome...">
+                <button class="btn btn-green" onclick="enviarChamadaNome()">📣 CHAMAR NA TV</button>
+            </div>
+
+            <div id="interfaceAvisos" style="display:none; margin-top: 20px;">
+                <label>Mensagem para TV</label>
+                <input type="text" id="inputAvisoUnidade" placeholder="O que vai aparecer na TV...">
+                <label>Cor do Card</label>
+                <input type="color" id="corAviso" value="#007bff">
+                <input type="hidden" id="editAvisoKey">
+                <button id="btnSalvarAviso" class="btn btn-blue" onclick="salvarAvisoTV()">💾 SALVAR AVISO</button>
+                <div id="listaAvisosGerencia" style="margin-top:15px;"></div>
+            </div>
+
+            <div class="hist-container" id="sessaoHistorico" style="display:none">
+                <label>Últimos de: <span id="nomeSalaHistorico" style="color:var(--secondary)"></span></label>
+                <div id="listaHistorico"></div>
+            </div>
+            
+            <p style="text-align:center; color:#ccc; font-size:0.7rem; cursor:pointer; margin-top:30px;" onclick="resetContadores()">Reiniciar Sistema</p>
+        </div>
+    </div>
+
+    <div class="footer-creditos">
+        Desenvolvido por <b>Lucas Freitas Gomes</b> &copy; 2026<br>
+        USF Dom Antonio Barbosa
+    </div>
+
+    <script>
+        let historicosPorSala = {};
+
+        const config = {
+            acolhimento: { salas: ["Mesa Acolhimento"], tipo: 'acolhimento' },
+            recepcao: { salas: ["Recepção 01", "Recepção 02", "Recepção 03"], tipo: 'misto' },
+            medico: { salas: ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04"], tipo: 'nome' },
+            enfermagem: { salas: ["Triagem", "Sala de Vacina", "Sala de Coleta", "Curativo / Procedimentos"], tipo: 'nome' },
+            odonto: { salas: ["Odontologia"], tipo: 'nome' },
+            auditorio: { salas: ["Auditório"], tipo: 'nome' },
+            servico_social: { salas: ["Serviço Social"], tipo: 'nome' },
+            gerencia: { salas: ["Gerência"], tipo: 'nome' }
+        };
+
+        function mostrarToast(msg) { const t = document.getElementById("toast"); t.innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
+
+        window.addEventListener('load', () => {
+            window.dbOnValue(window.dbRef(window.database, 'acolhimento'), snap => {
+                const d = snap.val() || {normal:0, pref:0, coleta:0, odonto:0};
+                document.getElementById('stNormal').innerText = d.normal;
+                document.getElementById('stPref').innerText = d.pref;
+                document.getElementById('stColeta').innerText = d.coleta;
+                document.getElementById('stOdonto').innerText = d.odonto;
+            });
+        });
+
+        function trocouCategoria() {
+            const cat = document.getElementById('categoria').value;
+            const selSala = document.getElementById('minhaSala');
+            if (!cat) { document.getElementById('areaChamada').style.display="none"; return; }
+            selSala.innerHTML = "";
+            config[cat].salas.forEach(s => { let o = document.createElement('option'); o.value = s; o.innerText = s; selSala.appendChild(o); });
+            const lbl = document.getElementById('labelNome');
+            const inp = document.getElementById('nomePaciente');
+            if(cat === 'gerencia') { lbl.innerText = "Nome do Colaborador"; inp.placeholder = "Digite o nome do colaborador..."; }
+            else { lbl.innerText = "Nome do Paciente"; inp.placeholder = "Digite o nome..."; }
+            configurarTela();
+        }
+
+        function configurarTela() {
+            const cat = document.getElementById('categoria').value;
+            const salaAtual = document.getElementById('minhaSala').value;
+            document.getElementById('interfaceAcolhimento').style.display = (cat === 'acolhimento') ? 'block' : 'none';
+            document.getElementById('interfaceRecepcao').style.display = (cat === 'recepcao') ? 'block' : 'none';
+            document.getElementById('interfaceNome').style.display = (config[cat].tipo === 'nome') ? 'block' : 'none';
+            document.getElementById('interfaceAvisos').style.display = (cat === 'gerencia') ? 'block' : 'none';
+            document.getElementById('interfaceColeta').style.display = (salaAtual === "Sala de Coleta") ? 'block' : 'none';
+            document.getElementById('selecaoSala').style.display = (cat === 'acolhimento') ? 'none' : 'block';
+            document.getElementById('sessaoHistorico').style.display = (cat !== 'acolhimento') ? 'block' : 'none';
+            document.getElementById('painelStatus').style.display = (cat === 'recepcao' || salaAtual === "Sala de Coleta") ? 'block' : 'none';
+            document.getElementById('areaChamada').style.display = "block";
+            renderizarHistorico();
+            if(cat === 'gerencia') atualizarListaAvisos();
+        }
+
+        function gerarSenha(key, prefixo) {
+            window.dbTransaction(window.dbRef(window.database, 'contador/' + key), v => (v || 0) + 1).then(result => {
+                if (result.committed) {
+                    enviarParaFirebase(`${prefixo} ${String(result.snapshot.val()).padStart(2, '0')}`);
+                    mostrarToast("Enviado!");
+                }
+            });
+        }
+
+        function enviarChamadaNome() {
+            const input = document.getElementById('nomePaciente');
+            const cat = document.getElementById('categoria').value;
+            let texto = input.value.trim();
+            if(texto !== "") { 
+                if(cat === 'gerencia') { texto = "COLABORADOR: " + texto; }
+                enviarParaFirebase(texto); input.value = ""; mostrarToast("Enviado!"); 
+            }
+        }
+
+        function enviarParaFirebase(texto) {
+            const sala = document.getElementById('minhaSala').value;
+            window.dbPush(window.dbRef(window.database, 'fila_chamadas'), { msg: texto, local: sala, hora: Date.now() });
+            if (!historicosPorSala[sala]) historicosPorSala[sala] = [];
+            historicosPorSala[sala].unshift({ texto: texto, hora: new Date().toLocaleTimeString() });
+            if(historicosPorSala[sala].length > 5) historicosPorSala[sala].pop();
+            renderizarHistorico();
+        }
+
+        function renderizarHistorico() {
+            const sala = document.getElementById('minhaSala').value;
+            const lista = document.getElementById('listaHistorico');
+            if(!lista) return; lista.innerHTML = "";
+            document.getElementById('nomeSalaHistorico').innerText = sala;
+            if (historicosPorSala[sala]) {
+                historicosPorSala[sala].forEach(item => {
+                    lista.innerHTML += `<div class="hist-item"><div><b>${item.texto}</b> <small>(${item.hora})</small></div><button class="btn-rechamada" onclick="enviarParaFirebase('${item.texto}')">RECHAMAR</button></div>`;
+                });
+            }
+        }
+
+        function atualizarEntregues() {
+            const d = {
+                normal: parseInt(document.getElementById('inputNormal').value) || 0,
+                pref: parseInt(document.getElementById('inputPref').value) || 0,
+                coleta: parseInt(document.getElementById('inputColeta').value) || 0,
+                odonto: parseInt(document.getElementById('inputOdonto').value) || 0
+            };
+            window.dbSet(window.dbRef(window.database, 'acolhimento'), d).then(() => mostrarToast("Sincronizado!"));
+        }
+
+        function salvarAvisoTV() {
+            const msg = document.getElementById('inputAvisoUnidade').value.trim();
+            const cor = document.getElementById('corAviso').value;
+            const key = document.getElementById('editAvisoKey').value;
+            if(!msg) return;
+            if(key) {
+                window.dbUpdate(window.dbRef(window.database, 'avisos_unidade/' + key), {msg, cor}).then(() => {
+                    document.getElementById('editAvisoKey').value = "";
+                    document.getElementById('btnSalvarAviso').innerText = "💾 SALVAR AVISO";
+                    mostrarToast("Alterado!");
+                });
+            } else {
+                window.dbPush(window.dbRef(window.database, 'avisos_unidade'), {msg, cor}).then(() => mostrarToast("Criado!"));
+            }
+            document.getElementById('inputAvisoUnidade').value = "";
+        }
+
+        function atualizarListaAvisos() {
+            window.dbOnValue(window.dbRef(window.database, 'avisos_unidade'), snap => {
+                const container = document.getElementById('listaAvisosGerencia'); container.innerHTML = "<b>Avisos Ativos:</b><br>";
+                snap.forEach(child => {
+                    const data = child.val();
+                    container.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;"><div><span style="color:${data.cor}">●</span> ${data.msg}</div><div><button onclick="prepararEdicao('${child.key}', '${data.msg}', '${data.cor}')">✏️</button><button onclick="excluirAviso('${child.key}')">❌</button></div></div>`;
+                });
+            });
+        }
+        function prepararEdicao(key, msg, cor) { document.getElementById('inputAvisoUnidade').value = msg; document.getElementById('corAviso').value = cor; document.getElementById('editAvisoKey').value = key; document.getElementById('btnSalvarAviso').innerText = "💾 SALVAR ALTERAÇÃO"; }
+        function excluirAviso(key) { if(confirm("Excluir?")) window.dbRemove(window.dbRef(window.database, 'avisos_unidade/' + key)); }
+        function resetContadores() { 
+            if(confirm("Zerar contadores do sistema?")) { 
+                const pass = prompt("Senha do Administrador:"); 
+                if(pass === "123456") { 
+                    window.dbSet(window.dbRef(window.database, 'contador'), { NORMAL: 0, PREFERENCIAL: 0, COLETA: 0, ODONTO: 0 }); 
+                    window.dbSet(window.dbRef(window.database, 'acolhimento'), { normal: 0, pref: 0, coleta: 0, odonto: 0 }); 
+                    mostrarToast("Sistema Resetado!"); 
+                } 
+            } 
+        }
+    </script>
+</body>
+</html>
