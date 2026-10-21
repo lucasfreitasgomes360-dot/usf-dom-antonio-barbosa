@@ -46,7 +46,7 @@
             <label>Selecione seu Setor / Sala</label>
             <select id="categoria" onchange="trocouCategoria()">
                 <option value="">-- Escolha o Setor --</option>
-                <option value="recepcao">🏢 RECEPÇÃO (Emitir Senhas)</option>
+                <option value="recepcao">🏢 RECEPÇÃO (Senhas e Chamada)</option>
                 <option value="consultorio">🩺 CONSULTÓRIO (05 Salas)</option>
                 <option value="odonto">🦷 ODONTOLOGIA</option>
                 <option value="vacina">💉 SALA DE VACINA</option>
@@ -69,10 +69,12 @@
             </div>
 
             <div id="interfaceRecepcao" style="display:none; margin-top: 15px;">
+                <label>Emitir Senhas (Primeiro Horário)</label>
                 <div class="flex-row">
                     <button class="btn btn-blue" onclick="gerarSenha('NORMAL', 'SENHA')">🟦 NORMAL</button>
                     <button class="btn btn-orange" onclick="gerarSenha('PREFERENCIAL', 'SENHA PREF.')">🟧 PREF.</button>
                 </div>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
             </div>
 
             <div id="interfaceNome" style="display:none; margin-top: 15px;">
@@ -155,10 +157,10 @@
         function configurarTela() {
             const cat = document.getElementById('categoria').value;
             document.getElementById('interfaceRecepcao').style.display = (cat === 'recepcao') ? 'block' : 'none';
-            document.getElementById('interfaceNome').style.display = (cat !== 'recepcao' && cat !== 'gerencia') ? 'block' : 'none';
+            document.getElementById('interfaceNome').style.display = (cat !== 'gerencia') ? 'block' : 'none'; // Agora a recepção e demais salas mostram a caixa de nome
             document.getElementById('interfaceAvisos').style.display = (cat === 'gerencia') ? 'block' : 'none';
             document.getElementById('painelStatus').style.display = (cat === 'recepcao') ? 'block' : 'none';
-            document.getElementById('sessaoHistorico').style.display = (cat !== 'recepcao') ? 'block' : 'none';
+            document.getElementById('sessaoHistorico').style.display = 'block';
             document.getElementById('areaChamada').style.display = "block";
             renderizarHistorico();
             if(cat === 'gerencia') atualizarListaAvisos();
