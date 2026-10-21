@@ -16,11 +16,11 @@
         .data-extenso { font-size: 1.1rem; color: #ccc; text-transform: capitalize; margin-top: 5px; }
         .conteudo-principal { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; position: relative; }
         #area-chamada { display: none; }
-        .paciente { font-size: 8rem; font-weight: bold; color: #ffcc00; text-transform: uppercase; padding: 0 20px; text-shadow: 4px 4px 10px rgba(0,0,0,0.5); }
-        .sala { font-size: 5rem; background: white; color: #002b5c; padding: 10px 60px; border-radius: 20px; display: inline-block; margin-top: 25px; font-weight: bold; border: 4px solid #ffcc00; }
+        .paciente { font-size: 7rem; font-weight: bold; color: #ffcc00; text-transform: uppercase; padding: 0 20px; text-shadow: 4px 4px 10px rgba(0,0,0,0.5); }
+        .sala { font-size: 4.5rem; background: white; color: #002b5c; padding: 10px 50px; border-radius: 20px; display: inline-block; margin-top: 25px; font-weight: bold; border: 4px solid #ffcc00; }
         #painel-informativo { display: block; padding: 20px; }
         .card-info { background: white; color: #333; border-radius: 25px; padding: 45px; max-width: 85%; margin: 0 auto; border-left: 25px solid #007bff; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #texto-info { font-size: 4rem; margin: 25px 0; font-weight: bold; line-height: 1.2; }
+        #texto-info { font-size: 3.5rem; margin: 25px 0; font-weight: bold; line-height: 1.2; }
         .barra-progresso { height: 10px; background: #eee; border-radius: 5px; margin-top: 20px; overflow: hidden; }
         #progresso-fill { height: 100%; width: 0%; background: #007bff; }
         @keyframes flash { 0% { background-color: #002b5c; } 50% { background-color: #ffcc00; } 100% { background-color: #002b5c; } }
@@ -145,7 +145,7 @@
                 
                 let loc = local.toLowerCase();
                 let prep = "ao"; 
-                if (loc.includes("recepção") || loc.includes("triagem") || loc.includes("vacina") || loc.includes("coleta") || loc.includes("sala") || loc.includes("mesa") || loc.includes("gerência")) {
+                if (loc.includes("recepção") || loc.includes("triagem") || loc.includes("vacina") || loc.includes("medicação") || loc.includes("sala") || loc.includes("gerência") || loc.includes("curativo") || loc.includes("odontologia")) {
                     prep = "à"; 
                 }
                 let nomeUpper = nome.toUpperCase();
