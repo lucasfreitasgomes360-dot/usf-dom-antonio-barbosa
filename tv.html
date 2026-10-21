@@ -3,30 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>TV - USF Dom Antonio Barbosa</title>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js";
-        import { getDatabase, ref, onChildAdded, onValue, remove } from "https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDwWmY1vO6AJaVupUGeOsPs82ChYiDtrxo",
-            authDomain: "usf-dom-antonio-barbosa.firebaseapp.com",
-            databaseURL: "https://usf-dom-antonio-barbosa-default-rtdb.firebaseio.com",
-            projectId: "usf-dom-antonio-barbosa",
-            storageBucket: "usf-dom-antonio-barbosa.firebasestorage.app",
-            messagingSenderId: "453061560453",
-            appId: "1:453061560453:web:db2ae1928a0a74e33941ec",
-            measurementId: "G-RQCJ7ECDR3"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
-        window.database = database;
-        window.dbRef = ref;
-        window.dbOnChildAdded = onChildAdded;
-        window.dbOnValue = onValue;
-        window.dbRemove = remove;
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
     <style>
         body { background: #002b5c; color: white; font-family: sans-serif; text-align: center; height: 100vh; margin: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .topo { background: #001a38; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid #ffcc00; }
@@ -91,22 +69,30 @@
     <div id="painel-historico" class="historico-tv"></div>
 
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwWmY1vO6AJaVupUGeOsPs82ChYiDtrxo",
+            authDomain: "usf-dom-antonio-barbosa.firebaseapp.com",
+            databaseURL: "https://usf-dom-antonio-barbosa-default-rtdb.firebaseio.com",
+            projectId: "usf-dom-antonio-barbosa",
+            storageBucket: "usf-dom-antonio-barbosa.firebasestorage.app",
+            messagingSenderId: "453061560453",
+            appId: "1:453061560453:web:db2ae1928a0a74e33941ec",
+            measurementId: "G-RQCJ7ECDR3"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
         const somCampainha = new Audio('https://assets.mixkit.co/active_storage/sfx/2861/2861-preview.mp3');
         
         let filaDeEspera = [], processandoChamada = false, listaAvisos = [], indiceAviso = 0, intervaloCarrossel, histTv = [];
 
-        window.addEventListener('load', () => {
-            window.dbOnChildAdded(window.dbRef(window.database, 'fila_chamadas'), (snap) => {
-                filaDeEspera.push(snap.val()); 
-                window.dbRemove(window.dbRef(window.database, 'fila_chamadas/' + snap.key));
-                if (!processandoChamada) iniciarFila();
-            });
+        database.ref('fila_chamadas').on('child_added', (snap) => {
+            filaDeEspera.push(snap.val()); database.ref('fila_chamadas/' + snap.key).remove();
+            if (!processandoChamada) iniciarFila();
+        });
 
-            window.dbOnValue(window.dbRef(window.database, 'avisos_unidade'), snap => {
-                listaAvisos = []; 
-                snap.forEach(child => { listaAvisos.push(child.val()); });
-                if (!processandoChamada) iniciarCarrossel();
-            });
+        database.ref('avisos_unidade').on('value', snap => {
+            listaAvisos = []; snap.forEach(child => { listaAvisos.push(child.val()); });
+            if (!processandoChamada) iniciarCarrossel();
         });
 
         function abreviarNome(nomeCompleto) {
@@ -127,14 +113,10 @@
 
         async function iniciarFila() {
             if (filaDeEspera.length === 0) { 
-                processandoChamada = false; 
-                document.getElementById('area-chamada').style.display = 'none'; 
-                document.getElementById('painel-informativo').style.display = 'block'; 
-                iniciarCarrossel(); 
-                return; 
+                processandoChamada = false; document.getElementById('area-chamada').style.display = 'none'; 
+                document.getElementById('painel-informativo').style.display = 'block'; iniciarCarrossel(); return; 
             }
-            processandoChamada = true; 
-            clearInterval(intervaloCarrossel);
+            processandoChamada = true; clearInterval(intervaloCarrossel);
             
             const atual = filaDeEspera.shift();
             let msgOriginal = atual.msg.replace("COLABORADOR: ", "");
@@ -193,12 +175,8 @@
 
         function iniciarCarrossel() {
             clearInterval(intervaloCarrossel);
-            if (listaAvisos.length === 0) { 
-                document.getElementById('texto-info').innerText = "USF Dom Antonio Barbosa"; 
-                return; 
-            }
-            rodarFrase(); 
-            intervaloCarrossel = setInterval(rodarFrase, 12000);
+            if (listaAvisos.length === 0) { document.getElementById('texto-info').innerText = "USF Dom Antonio Barbosa"; return; }
+            rodarFrase(); intervaloCarrossel = setInterval(rodarFrase, 12000);
         }
 
         function rodarFrase() {
@@ -207,8 +185,7 @@
             const card = document.getElementById('card-cor');
             const txt = document.getElementById('texto-info');
             const fill = document.getElementById('progresso-fill');
-            fill.style.transition = 'none'; 
-            fill.style.width = '0%';
+            fill.style.transition = 'none'; fill.style.width = '0%';
             fill.style.backgroundColor = aviso.cor;
             card.style.borderLeftColor = aviso.cor;
             txt.innerText = aviso.msg;
@@ -217,13 +194,9 @@
         }
 
         function atualizarHistTV(msg, local) {
-            histTv.unshift({msg, local}); 
-            if(histTv.length > 4) histTv.pop();
-            const p = document.getElementById('painel-historico'); 
-            p.innerHTML = "";
-            histTv.forEach(h => { 
-                p.innerHTML += `<div class="hist-item-tv"><b>${h.msg}</b><br><small>${h.local}</small></div>`; 
-            });
+            histTv.unshift({msg, local}); if(histTv.length > 4) histTv.pop();
+            const p = document.getElementById('painel-historico'); p.innerHTML = "";
+            histTv.forEach(h => { p.innerHTML += `<div class="hist-item-tv"><b>${h.msg}</b><br><small>${h.local}</small></div>`; });
         }
 
         setInterval(() => { 
