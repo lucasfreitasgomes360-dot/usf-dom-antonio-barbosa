@@ -20,7 +20,6 @@
         .btn-blue { background: var(--secondary); }
         .btn-orange { background: var(--warning); }
         .btn-green { background: var(--success); }
-        .btn-info { background: var(--info); }
         .btn-purple { background: #6f42c1; }
         .flex-row { display: flex; gap: 10px; }
         .flex-row .btn { width: 50%; }
@@ -44,17 +43,17 @@
         </div>
         
         <div class="card-setor">
-            <label>Selecione seu Setor</label>
+            <label>Selecione seu Setor / Sala</label>
             <select id="categoria" onchange="trocouCategoria()">
                 <option value="">-- Escolha o Setor --</option>
-                <option value="acolhimento">🎫 ACOLHIMENTO</option>
-                <option value="recepcao">🏢 RECEPÇÃO</option>
-                <option value="medico">🩺 MÉDICO</option>
-                <option value="enfermagem">💉 ENFERMAGEM</option>
+                <option value="recepcao">🏢 RECEPÇÃO (Emitir Senhas)</option>
+                <option value="consultorio">🩺 CONSULTÓRIO (05 Salas)</option>
                 <option value="odonto">🦷 ODONTOLOGIA</option>
-                <option value="auditorio">📢 AUDITÓRIO</option>
-                <option value="servico_social">🤝 SERVIÇO SOCIAL</option>
-                <option value="gerencia">⚙️ GERÊNCIA</option>
+                <option value="vacina">💉 SALA DE VACINA</option>
+                <option value="medicacao">💊 SALA DE MEDICAÇÃO</option>
+                <option value="triagem">📋 TRIAGEM</option>
+                <option value="curativo">🩹 CURATIVO</option>
+                <option value="gerencia">⚙️ GERÊNCIA / AVISOS</option>
             </select>
         </div>
 
@@ -62,23 +61,10 @@
             <div id="painelStatus" class="status-grid" style="display:none">
                 <div class="status-item">Normal: <b id="stNormal">0</b></div>
                 <div class="status-item">Pref: <b id="stPref">0</b></div>
-                <div class="status-item">Coleta: <b id="stColeta">0</b></div>
-                <div class="status-item">Odonto: <b id="stOdonto">0</b></div>
-            </div>
-
-            <div id="interfaceAcolhimento" style="display:none">
-                <label>Sincronizar Senhas Entregues</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <input type="number" id="inputNormal" placeholder="Normal">
-                    <input type="number" id="inputPref" placeholder="Pref">
-                    <input type="number" id="inputColeta" placeholder="Coleta">
-                    <input type="number" id="inputOdonto" placeholder="Odonto">
-                </div>
-                <button class="btn btn-green" onclick="atualizarEntregues()">✅ Sincronizar Tudo</button>
             </div>
 
             <div id="selecaoSala">
-                <label>Sua Sala/Local</label>
+                <label>Selecione a Sala Específica</label>
                 <select id="minhaSala" onchange="configurarTela()"></select>
             </div>
 
@@ -87,11 +73,6 @@
                     <button class="btn btn-blue" onclick="gerarSenha('NORMAL', 'SENHA')">🟦 NORMAL</button>
                     <button class="btn btn-orange" onclick="gerarSenha('PREFERENCIAL', 'SENHA PREF.')">🟧 PREF.</button>
                 </div>
-                <button class="btn btn-info" onclick="gerarSenha('ODONTO', 'SENHA ODONTO')">🦷 ODONTOLOGIA</button>
-            </div>
-
-            <div id="interfaceColeta" style="display:none; margin-top:15px;">
-                <button class="btn btn-purple" onclick="gerarSenha('COLETA', 'SENHA COLETA')">🧪 CHAMAR COLETA</button>
             </div>
 
             <div id="interfaceNome" style="display:none; margin-top: 15px;">
@@ -111,7 +92,7 @@
             </div>
 
             <div class="hist-container" id="sessaoHistorico" style="display:none">
-                <label>Últimos de: <span id="nomeSalaHistorico" style="color:var(--secondary)"></span></label>
+                <label>Últimos chamados de: <span id="nomeSalaHistorico" style="color:var(--secondary)"></span></label>
                 <div id="listaHistorico"></div>
             </div>
             
@@ -140,24 +121,22 @@
         let historicosPorSala = {};
 
         const config = {
-            acolhimento: { salas: ["Mesa Acolhimento"], tipo: 'acolhimento' },
-            recepcao: { salas: ["Recepção 01", "Recepção 02", "Recepção 03"], tipo: 'misto' },
-            medico: { salas: ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04"], tipo: 'nome' },
-            enfermagem: { salas: ["Triagem", "Sala de Vacina", "Sala de Coleta", "Curativo / Procedimentos"], tipo: 'nome' },
+            recepcao: { salas: ["Recepção"], tipo: 'recepcao' },
+            consultorio: { salas: ["Consultório 01", "Consultório 02", "Consultório 03", "Consultório 04", "Consultório 05"], tipo: 'nome' },
             odonto: { salas: ["Odontologia"], tipo: 'nome' },
-            auditorio: { salas: ["Auditório"], tipo: 'nome' },
-            servico_social: { salas: ["Serviço Social"], tipo: 'nome' },
-            gerencia: { salas: ["Gerência"], tipo: 'nome' }
+            vacina: { salas: ["Sala de Vacina"], tipo: 'nome' },
+            medicacao: { salas: ["Sala de Medicação"], tipo: 'nome' },
+            triagem: { salas: ["Triagem"], tipo: 'nome' },
+            curativo: { salas: ["Curativo"], tipo: 'nome' },
+            gerencia: { salas: ["Gerência"], tipo: 'gerencia' }
         };
 
         function mostrarToast(msg) { const t = document.getElementById("toast"); t.innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
 
         database.ref('acolhimento').on('value', snap => {
-            const d = snap.val() || {normal:0, pref:0, coleta:0, odonto:0};
+            const d = snap.val() || {normal:0, pref:0};
             document.getElementById('stNormal').innerText = d.normal;
             document.getElementById('stPref').innerText = d.pref;
-            document.getElementById('stColeta').innerText = d.coleta;
-            document.getElementById('stOdonto').innerText = d.odonto;
         });
 
         function trocouCategoria() {
@@ -175,15 +154,11 @@
 
         function configurarTela() {
             const cat = document.getElementById('categoria').value;
-            const salaAtual = document.getElementById('minhaSala').value;
-            document.getElementById('interfaceAcolhimento').style.display = (cat === 'acolhimento') ? 'block' : 'none';
             document.getElementById('interfaceRecepcao').style.display = (cat === 'recepcao') ? 'block' : 'none';
-            document.getElementById('interfaceNome').style.display = (config[cat].tipo === 'nome') ? 'block' : 'none';
+            document.getElementById('interfaceNome').style.display = (cat !== 'recepcao' && cat !== 'gerencia') ? 'block' : 'none';
             document.getElementById('interfaceAvisos').style.display = (cat === 'gerencia') ? 'block' : 'none';
-            document.getElementById('interfaceColeta').style.display = (salaAtual === "Sala de Coleta") ? 'block' : 'none';
-            document.getElementById('selecaoSala').style.display = (cat === 'acolhimento') ? 'none' : 'block';
-            document.getElementById('sessaoHistorico').style.display = (cat !== 'acolhimento') ? 'block' : 'none';
-            document.getElementById('painelStatus').style.display = (cat === 'recepcao' || salaAtual === "Sala de Coleta") ? 'block' : 'none';
+            document.getElementById('painelStatus').style.display = (cat === 'recepcao') ? 'block' : 'none';
+            document.getElementById('sessaoHistorico').style.display = (cat !== 'recepcao') ? 'block' : 'none';
             document.getElementById('areaChamada').style.display = "block";
             renderizarHistorico();
             if(cat === 'gerencia') atualizarListaAvisos();
@@ -191,22 +166,28 @@
 
         function gerarSenha(key, prefixo) {
             database.ref('contador/' + key).transaction(v => (v || 0) + 1, (err, comm, snap) => {
-                if (comm) { enviarParaFirebase(`${prefixo} ${String(snap.val()).padStart(2, '0')}`); mostrarToast("Enviado!"); }
+                if (comm) { 
+                    const numStr = String(snap.val()).padStart(2, '0');
+                    enviarParaFirebase(`${prefixo} ${numStr}`, "Recepção"); 
+                    mostrarToast("Senha gerada!"); 
+                }
             });
         }
 
         function enviarChamadaNome() {
             const input = document.getElementById('nomePaciente');
             const cat = document.getElementById('categoria').value;
+            const sala = document.getElementById('minhaSala').value;
             let texto = input.value.trim();
             if(texto !== "") { 
                 if(cat === 'gerencia') { texto = "COLABORADOR: " + texto; }
-                enviarParaFirebase(texto); input.value = ""; mostrarToast("Enviado!"); 
+                enviarParaFirebase(texto, sala); 
+                input.value = ""; 
+                mostrarToast("Chamado enviado!"); 
             }
         }
 
-        function enviarParaFirebase(texto) {
-            const sala = document.getElementById('minhaSala').value;
+        function enviarParaFirebase(texto, sala) {
             database.ref('fila_chamadas').push({ msg: texto, local: sala, hora: Date.now() });
             if (!historicosPorSala[sala]) historicosPorSala[sala] = [];
             historicosPorSala[sala].unshift({ texto: texto, hora: new Date().toLocaleTimeString() });
@@ -221,19 +202,9 @@
             document.getElementById('nomeSalaHistorico').innerText = sala;
             if (historicosPorSala[sala]) {
                 historicosPorSala[sala].forEach(item => {
-                    lista.innerHTML += `<div class="hist-item"><div><b>${item.texto}</b> <small>(${item.hora})</small></div><button class="btn-rechamada" onclick="enviarParaFirebase('${item.texto}')">RECHAMAR</button></div>`;
+                    lista.innerHTML += `<div class="hist-item"><div><b>${item.texto}</b> <small>(${item.hora})</small></div><button class="btn-rechamada" onclick="enviarParaFirebase('${item.texto}', '${sala}')">RECHAMAR</button></div>`;
                 });
             }
-        }
-
-        function atualizarEntregues() {
-            const d = {
-                normal: parseInt(document.getElementById('inputNormal').value) || 0,
-                pref: parseInt(document.getElementById('inputPref').value) || 0,
-                coleta: parseInt(document.getElementById('inputColeta').value) || 0,
-                odonto: parseInt(document.getElementById('inputOdonto').value) || 0
-            };
-            database.ref('acolhimento').set(d).then(() => mostrarToast("Sincronizado!"));
         }
 
         function salvarAvisoTV() {
@@ -268,8 +239,7 @@
             if(confirm("Zerar contadores?")) { 
                 const pass = prompt("Senha:"); 
                 if(pass === "123456") { 
-                    database.ref('contador').set({ NORMAL: 0, PREFERENCIAL: 0, COLETA: 0, ODONTO: 0 }); 
-                    database.ref('acolhimento').set({ normal: 0, pref: 0, coleta: 0, odonto: 0 }); 
+                    database.ref('contador').set({ NORMAL: 0, PREFERENCIAL: 0 }); 
                     mostrarToast("Resetado!"); 
                 } 
             } 
