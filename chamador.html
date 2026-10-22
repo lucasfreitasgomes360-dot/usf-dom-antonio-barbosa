@@ -21,7 +21,6 @@
         .btn-orange { background: var(--warning); }
         .btn-green { background: var(--success); }
         .btn-purple { background: #6f42c1; }
-        .btn-silencio { background: #e65100; }
         .flex-row { display: flex; gap: 10px; }
         .flex-row .btn { width: 50%; }
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fff3cd; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ffeeba; text-align: center; }
@@ -59,14 +58,6 @@
             </select>
         </div>
 
-        <!-- Botão de Controle de Ruído no Saguão -->
-        <div class="card-setor" style="background: #fff3cd; border-color: #ffeeba;">
-            <label style="color: #856404;">Controle de Ruído no Saguão</label>
-            <button class="btn btn-silencio" onclick="acionarSilencio()" style="margin-bottom:0;">
-                🤫 PEDIR SILÊNCIO (SAGUÃO)
-            </button>
-        </div>
-
         <div id="areaChamada" style="display:none">
             <div id="painelStatus" class="status-grid" style="display:none">
                 <div class="status-item">Normal: <b id="stNormal">0</b></div>
@@ -76,15 +67,6 @@
             <div id="selecaoSala">
                 <label>Selecione a Sala Específica</label>
                 <select id="minhaSala" onchange="configurarTela()"></select>
-            </div>
-
-            <div id="interfaceRecepcao" style="display:none; margin-top: 15px;">
-                <label>Emitir Senhas (Primeiro Horário)</label>
-                <div class="flex-row">
-                    <button class="btn btn-blue" onclick="gerarSenha('NORMAL', 'SENHA')">🟦 NORMAL</button>
-                    <button class="btn btn-orange" onclick="gerarSenha('PREFERENCIAL', 'SENHA PREF.')">🟧 PREF.</button>
-                </div>
-                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
             </div>
 
             <div id="interfaceNome" style="display:none; margin-top: 15px;">
@@ -178,7 +160,6 @@
 
         function configurarTela() {
             const cat = document.getElementById('categoria').value;
-            document.getElementById('interfaceRecepcao').style.display = (cat === 'recepcao') ? 'block' : 'none';
             document.getElementById('interfaceNome').style.display = (cat !== 'gerencia') ? 'block' : 'none';
             document.getElementById('interfaceAvisos').style.display = (cat === 'gerencia') ? 'block' : 'none';
             document.getElementById('painelStatus').style.display = (cat === 'recepcao') ? 'block' : 'none';
@@ -186,27 +167,6 @@
             document.getElementById('areaChamada').style.display = "block";
             renderizarHistorico();
             if(cat === 'gerencia') atualizarListaAvisos();
-        }
-
-        function acionarSilencio() {
-            const msg = "Atenção, por favor. Pedimos educadamente a colaboração de todos no saguão para reduzir o volume da conversa e aparelhos celulares. Isso ajuda no atendimento e no bem-estar de todos os pacientes. Agradecemos a sua compreensão.";
-            database.ref('fila_chamadas').push({
-                tipo: 'silencio',
-                msg: msg,
-                local: 'SAGUÃO',
-                hora: Date.now()
-            });
-            mostrarToast("Alerta de silêncio enviado para a TV!");
-        }
-
-        function gerarSenha(key, prefixo) {
-            database.ref('contador/' + key).transaction(v => (v || 0) + 1, (err, comm, snap) => {
-                if (comm) { 
-                    const numStr = String(snap.val()).padStart(2, '0');
-                    enviarParaFirebase(`${prefixo} ${numStr}`, "Recepção"); 
-                    mostrarToast("Senha gerada!"); 
-                }
-            });
         }
 
         function enviarChamadaNome() {
