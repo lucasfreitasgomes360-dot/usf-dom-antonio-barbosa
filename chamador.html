@@ -21,6 +21,7 @@
         .btn-orange { background: var(--warning); }
         .btn-green { background: var(--success); }
         .btn-purple { background: #6f42c1; }
+        .btn-silencio { background: #e65100; }
         .flex-row { display: flex; gap: 10px; }
         .flex-row .btn { width: 50%; }
         .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fff3cd; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ffeeba; text-align: center; }
@@ -56,6 +57,14 @@
                 <option value="procedimento">🔬 SALA DE PROCEDIMENTO</option>
                 <option value="gerencia">⚙️ GERÊNCIA / AVISOS</option>
             </select>
+        </div>
+
+        <!-- Botão de Controle de Ruído no Saguão -->
+        <div class="card-setor" style="background: #fff3cd; border-color: #ffeeba;">
+            <label style="color: #856404;">Controle de Ruído no Saguão</label>
+            <button class="btn btn-silencio" onclick="acionarSilencio()" style="margin-bottom:0;">
+                🤫 PEDIR SILÊNCIO (SAGUÃO)
+            </button>
         </div>
 
         <div id="areaChamada" style="display:none">
@@ -177,6 +186,17 @@
             document.getElementById('areaChamada').style.display = "block";
             renderizarHistorico();
             if(cat === 'gerencia') atualizarListaAvisos();
+        }
+
+        function acionarSilencio() {
+            const msg = "Atenção, por favor. Pedimos educadamente a colaboração de todos no saguão para reduzir o volume da conversa e aparelhos celulares. Isso ajuda no atendimento e no bem-estar de todos os pacientes. Agradecemos a sua compreensão.";
+            database.ref('fila_chamadas').push({
+                tipo: 'silencio',
+                msg: msg,
+                local: 'SAGUÃO',
+                hora: Date.now()
+            });
+            mostrarToast("Alerta de silêncio enviado para a TV!");
         }
 
         function gerarSenha(key, prefixo) {
