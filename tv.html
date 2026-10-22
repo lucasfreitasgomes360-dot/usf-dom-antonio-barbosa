@@ -119,11 +119,39 @@
             processandoChamada = true; clearInterval(intervaloCarrossel);
             
             const atual = filaDeEspera.shift();
+
+            if (atual.tipo === 'silencio') {
+                document.getElementById('area-chamada').style.display = 'block';
+                document.getElementById('painel-informativo').style.display = 'none';
+                
+                const txtP = document.getElementById('txtPaciente');
+                txtP.style.fontSize = '2.8rem';
+                txtP.style.lineHeight = '1.3';
+                txtP.innerText = atual.msg;
+                
+                document.getElementById('txtSala').innerText = atual.local || "SAGUÃO";
+                
+                document.body.classList.remove('piscar-alerta'); 
+                void document.body.offsetWidth; 
+                document.body.classList.add('piscar-alerta');
+                
+                somCampainha.play().catch(e => {});
+                atualizarHistTV("SILÊNCIO NO SAGUÃO", "Aviso Geral");
+                
+                await falarSilencioTV(atual.msg);
+                
+                txtP.style.fontSize = '7rem';
+                txtP.style.lineHeight = 'normal';
+                setTimeout(iniciarFila, 4000);
+                return;
+            }
+
             let msgOriginal = atual.msg.replace("COLABORADOR: ", "");
             let msgAbreviada = abreviarNome(msgOriginal);
 
             document.getElementById('area-chamada').style.display = 'block';
             document.getElementById('painel-informativo').style.display = 'none';
+            document.getElementById('txtPaciente').style.fontSize = '7rem';
             document.getElementById('txtPaciente').innerText = msgAbreviada;
             document.getElementById('txtSala').innerText = atual.local;
             
@@ -137,6 +165,19 @@
             
             await falarTexto(atual.msg, atual.local);
             setTimeout(iniciarFila, 4000);
+        }
+
+        function falarSilencioTV(msg) {
+            return new Promise((resolve) => {
+                window.speechSynthesis.cancel();
+                const fala = new SpeechSynthesisUtterance(msg);
+                fala.lang = 'pt-BR';
+                fala.rate = 0.9;
+                fala.onend = () => resolve();
+                fala.onerror = () => resolve();
+                window.speechSynthesis.speak(fala);
+                setTimeout(resolve, 14000);
+            });
         }
 
         function falarTexto(nome, local) {
