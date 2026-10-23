@@ -75,8 +75,9 @@
                 <input type="hidden" id="editAvisoKey">
                 <button id="btnSalvarAviso" class="btn btn-blue" onclick="salvarAvisoTV()">💾 SALVAR AVISO</button>
                 <div id="listaAvisosGerencia" style="margin-top:15px;"></div>
+            </div>
 
-                <hr style="margin: 20px 0; border: 1px solid #ddd;">
+            <div id="interfaceSilencio" style="display:none; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 15px;">
                 <label>Aviso de Silêncio na TV</label>
                 <input type="text" id="inputSilencio" placeholder="Texto do silêncio..." value="SOLICITAMOS SILÊNCIO NO AMBIENTE">
                 <button class="btn btn-orange" onclick="enviarSilencio()">🔇 ACIONAR AVISO DE SILÊNCIO</button>
@@ -151,6 +152,7 @@
             const cat = document.getElementById('categoria').value;
             document.getElementById('interfaceNome').style.display = (cat !== 'gerencia') ? 'block' : 'none';
             document.getElementById('interfaceAvisos').style.display = (cat === 'gerencia') ? 'block' : 'none';
+            document.getElementById('interfaceSilencio').style.display = (cat === 'recepcao' || cat === 'gerencia') ? 'block' : 'none';
             document.getElementById('sessaoHistorico').style.display = 'block';
             document.getElementById('areaChamada').style.display = "block";
             renderizarHistorico();
@@ -184,7 +186,7 @@
             const input = document.getElementById('inputSilencio');
             let texto = input.value.trim();
             if(!texto) texto = "SOLICITAMOS SILÊNCIO NO AMBIENTE";
-            const sala = document.getElementById('minhaSala').value || "GERÊNCIA";
+            const sala = document.getElementById('minhaSala').value || "RECEPÇÃO";
             enviarParaFirebase(texto, sala, 'silencio');
             mostrarToast("Aviso de silêncio acionado!");
         }
