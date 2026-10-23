@@ -23,9 +23,6 @@
         .btn-purple { background: #6f42c1; }
         .flex-row { display: flex; gap: 10px; }
         .flex-row .btn { width: 50%; }
-        .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fff3cd; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ffeeba; text-align: center; }
-        .status-item { font-size: 0.85rem; color: #856404; }
-        .status-item b { font-size: 1.1rem; color: #000; }
         .hist-container { margin-top: 25px; border-top: 2px dashed #ddd; padding-top: 20px; }
         .hist-item { background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-rechamada { background: #f1f3f5; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; color: var(--secondary); cursor: pointer; }
@@ -59,11 +56,6 @@
         </div>
 
         <div id="areaChamada" style="display:none">
-            <div id="painelStatus" class="status-grid" style="display:none">
-                <div class="status-item">Normal: <b id="stNormal">0</b></div>
-                <div class="status-item">Pref: <b id="stPref">0</b></div>
-            </div>
-
             <div id="selecaoSala">
                 <label>Selecione a Sala Específica</label>
                 <select id="minhaSala" onchange="configurarTela()"></select>
@@ -83,14 +75,17 @@
                 <input type="hidden" id="editAvisoKey">
                 <button id="btnSalvarAviso" class="btn btn-blue" onclick="salvarAvisoTV()">💾 SALVAR AVISO</button>
                 <div id="listaAvisosGerencia" style="margin-top:15px;"></div>
+
+                <hr style="margin: 20px 0; border: 1px solid #ddd;">
+                <label>Aviso de Silêncio na TV</label>
+                <input type="text" id="inputSilencio" placeholder="Texto do silêncio..." value="SOLICITAMOS SILÊNCIO NO AMBIENTE">
+                <button class="btn btn-orange" onclick="enviarSilencio()">🔇 ACIONAR AVISO DE SILÊNCIO</button>
             </div>
 
             <div class="hist-container" id="sessaoHistorico" style="display:none">
                 <label>Últimos chamados de: <span id="nomeSalaHistorico" style="color:var(--secondary)"></span></label>
                 <div id="listaHistorico"></div>
             </div>
-            
-            <p style="text-align:center; color:#ccc; font-size:0.7rem; cursor:pointer; margin-top:30px;" onclick="resetContadores()">Reiniciar Sistema</p>
         </div>
     </div>
 
@@ -139,12 +134,6 @@
 
         function mostrarToast(msg) { const t = document.getElementById("toast"); t.innerText = msg; t.className = "show"; setTimeout(() => { t.className = ""; }, 3000); }
 
-        database.ref('acolhimento').on('value', snap => {
-            const d = snap.val() || {normal:0, pref:0};
-            document.getElementById('stNormal').innerText = d.normal;
-            document.getElementById('stPref').innerText = d.pref;
-        });
-
         function trocouCategoria() {
             const cat = document.getElementById('categoria').value;
             const selSala = document.getElementById('minhaSala');
@@ -162,7 +151,6 @@
             const cat = document.getElementById('categoria').value;
             document.getElementById('interfaceNome').style.display = (cat !== 'gerencia') ? 'block' : 'none';
             document.getElementById('interfaceAvisos').style.display = (cat === 'gerencia') ? 'block' : 'none';
-            document.getElementById('painelStatus').style.display = (cat === 'recepcao') ? 'block' : 'none';
             document.getElementById('sessaoHistorico').style.display = 'block';
             document.getElementById('areaChamada').style.display = "block";
             renderizarHistorico();
@@ -182,12 +170,23 @@
             }
         }
 
-        function enviarParaFirebase(texto, sala) {
-            database.ref('fila_chamadas').push({ msg: texto, local: sala, hora: Date.now() });
+        function enviarParaFirebase(texto, sala, tipo = '') {
+            let dados = { msg: texto, local: sala, hora: Date.now() };
+            if(tipo) dados.tipo = tipo;
+            database.ref('fila_chamadas').push(dados);
             if (!historicosPorSala[sala]) historicosPorSala[sala] = [];
             historicosPorSala[sala].unshift({ texto: texto, hora: new Date().toLocaleTimeString() });
             if(historicosPorSala[sala].length > 5) historicosPorSala[sala].pop();
             renderizarHistorico();
+        }
+
+        function enviarSilencio() {
+            const input = document.getElementById('inputSilencio');
+            let texto = input.value.trim();
+            if(!texto) texto = "SOLICITAMOS SILÊNCIO NO AMBIENTE";
+            const sala = document.getElementById('minhaSala').value || "GERÊNCIA";
+            enviarParaFirebase(texto, sala, 'silencio');
+            mostrarToast("Aviso de silêncio acionado!");
         }
 
         function renderizarHistorico() {
@@ -230,15 +229,6 @@
         }
         function prepararEdicao(key, msg, cor) { document.getElementById('inputAvisoUnidade').value = msg; document.getElementById('corAviso').value = cor; document.getElementById('editAvisoKey').value = key; document.getElementById('btnSalvarAviso').innerText = "💾 SALVAR ALTERAÇÃO"; }
         function excluirAviso(key) { if(confirm("Excluir?")) database.ref('avisos_unidade/'+key).remove(); }
-        function resetContadores() { 
-            if(confirm("Zerar contadores?")) { 
-                const pass = prompt("Senha:"); 
-                if(pass === "123456") { 
-                    database.ref('contador').set({ NORMAL: 0, PREFERENCIAL: 0 }); 
-                    mostrarToast("Resetado!"); 
-                } 
-            } 
-        }
     </script>
 </body>
 </html>
